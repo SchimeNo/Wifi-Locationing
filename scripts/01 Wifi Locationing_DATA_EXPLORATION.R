@@ -33,8 +33,8 @@ validation <- validation %>%
   select("LONGITUDE","LATITUDE","FLOOR","BUILDINGID","SPACEID","RELATIVEPOSITION","USERID","PHONEID","TIMESTAMP","LOCATION", everything())
 
 #subset the data so it runs faster for the initial exploration
-trainingSAMPLE <- training %>% select(1:11)
-validationSAMPLE <- validation %>% select(1:11)
+#trainingFEATURES <- training %>% select(1:11)
+#validationFEATURES <- validation %>% select(1:11)
 
 #check the Column Names
 colnames(training)
@@ -62,7 +62,9 @@ for (i in 1:530){
 means[1:11]<-0
 means<-as.data.frame(means)
 
-#barplot(means[11:530])
+#can also be done with the function apply
+#means<-apply(training[11:530], 2, mean)
+#means<-as.data.frame(means)
 
 #delete all the WAPs with a mean of =100
 indices<-c()
@@ -110,4 +112,46 @@ remove(WAPs_name, WAPs_building)
 
 #compare it to BUILDINGID to see if it's correct
 
+#find phones with weak signals
+phones <- split(training2, training2$PHONEID)
+sapply(phones, function(x) {
+  colMeans(x[, c(11:50)]) 
+  })
+
+####4.REMOVING LOW VARIANCE ####
+#Show WAPs variance
+variance <- sapply(training2[,c(11:length(training2))], var)
+
+#VARIANCE CRITERIA
+low_variance_WAP <- sapply(variance, function(x){
+  (x<5)
+})
+low_variance_WAP<- which(low_variance_WAP, arr.ind = TRUE)
+low_variance_WAP<- as.data.frame(low_variance_WAP)
+
+#Remove WAPs with low variance
+indicesVAR<-low_variance_WAP[,1]
+training3<- training2[-(indicesVAR)]
+
+#if WAP value is 100 change to -105
+#change_WAP_value <- apply(training2[,c(1:465)], 2, function(x) {ifelse(x == 100, -105, x)})
+
+
+####5.Metrics####
+trainingNA<-training2
+#Check min, max and mean excluding all the 100
+trainingNA[ trainingNA == 100] <-NA
+
+#function that shows mean, max, min
+multi.fun <- function(x) {
+  c(min = min(x, na.rm=TRUE), mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE), n=nrow(x))
+}
+metrics<- sapply(trainingNA[,c(11:length(training2))], multi.fun)
+
+
+####6. SAMPLING #####
+
+Training_sample <- training %>% group_by(FLOOR, BUILDINGID) %>% sample_n(100)
+table(Training_sample$FLOOR)
+table(Training_sample$BUILDINGID)
 
