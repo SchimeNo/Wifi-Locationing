@@ -1,6 +1,7 @@
 ####0. Libraries and directories####
-pacman::p_load(DT, dplyr, caret, dplyr,
-               ggplot2, lattice, rstudioapi)
+pacman::p_load(DT, dplyr, caret, readr,
+               ggplot2, lattice, rstudioapi,
+               plotly, htmltools, randomForest)
 
 #setting up directory
 current_path=getActiveDocumentContext()$path
@@ -33,8 +34,9 @@ validation <- validation %>%
   select("LONGITUDE","LATITUDE","FLOOR","BUILDINGID","SPACEID","RELATIVEPOSITION","USERID","PHONEID","TIMESTAMP","LOCATION", everything())
 
 #subset the data so it runs faster for the initial exploration
-#trainingFEATURES <- training %>% select(1:11)
+trainingFEATURES <- training %>% select(1:9)
 #validationFEATURES <- validation %>% select(1:11)
+GGally::ggcorr(trainingFEATURES, label = T)
 
 #check the Column Names
 colnames(training)
@@ -110,6 +112,8 @@ WAPs_location<- WAPs_location[-c(1:10),]
 
 remove(WAPs_name, WAPs_building)
 
+View(WAPs_location)
+
 #compare it to BUILDINGID to see if it's correct
 
 #find phones with weak signals
@@ -119,39 +123,43 @@ sapply(phones, function(x) {
   })
 
 ####4.REMOVING LOW VARIANCE ####
-#Show WAPs variance
-variance <- sapply(training2[,c(11:length(training2))], var)
+#Show WAPs row and columns with low variance
+#low variance rows
+variance <- apply(training2[,c(11:length(training2))],1, var) <=0.05
+training3 <- training2[!variance,]
 
-#VARIANCE CRITERIA
-low_variance_WAP <- sapply(variance, function(x){
-  (x<5)
-})
-low_variance_WAP<- which(low_variance_WAP, arr.ind = TRUE)
-low_variance_WAP<- as.data.frame(low_variance_WAP)
-
-#Remove WAPs with low variance
-indicesVAR<-low_variance_WAP[,1]
-training3<- training2[-(indicesVAR)]
+#low variance columns
+variance <- apply(training2[,c(11:length(training2))],2, var) <=0.05
+training3 <- training3[,!variance]
 
 #if WAP value is 100 change to -105
 #change_WAP_value <- apply(training2[,c(1:465)], 2, function(x) {ifelse(x == 100, -105, x)})
 
 
+validwapsdata <- data.frame(variance = apply(validation, 2, var),
+                            mean = apply(validation, 2, mean),
+                            median = apply(validation, 2, median))
+
+
+
 ####5.Metrics####
-trainingNA<-training2
+trainingNA<-training3
 #Check min, max and mean excluding all the 100
-trainingNA[ trainingNA == 100] <-NA
+grep("WAP", names(training3), value=T)
 
 #function that shows mean, max, min
 multi.fun <- function(x) {
   c(min = min(x, na.rm=TRUE), mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE), n=nrow(x))
 }
-metrics<- sapply(trainingNA[,c(11:length(training2))], multi.fun)
-
+metrics<- sapply(trainingNA[,c(11:length(training3))], multi.fun)
 
 ####6. SAMPLING #####
 
-Training_sample <- training %>% group_by(FLOOR, BUILDINGID) %>% sample_n(100)
+Training_sample <- training3 %>% group_by(FLOOR, BUILDINGID) %>% sample_n(500)
 table(Training_sample$FLOOR)
 table(Training_sample$BUILDINGID)
 
+Training_sample$BUILDINGID <- as.character(Training_sample$BUILDINGID)
+
+#write.csv(Training_sample, file = "./datasets/Training_sample.csv")
+saveRDS(training3, file = "./datasets/training2.rds")
