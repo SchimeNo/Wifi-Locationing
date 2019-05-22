@@ -125,22 +125,16 @@ sapply(phones, function(x) {
 ####4.REMOVING LOW VARIANCE ####
 #Show WAPs row and columns with low variance
 #low variance rows
-variance <- apply(training2[,c(11:length(training2))],1, var) <=0.05
+training3<-training2
+variance <- apply(training2[,c(11:length(training2))],1, var) <=0.5
 training3 <- training2[!variance,]
 
 #low variance columns
-variance <- apply(training2[,c(11:length(training2))],2, var) <=0.05
+variance <- apply(training2[,c(11:length(training2))],2, var) <=2
 training3 <- training3[,!variance]
 
 #if WAP value is 100 change to -105
 #change_WAP_value <- apply(training2[,c(1:465)], 2, function(x) {ifelse(x == 100, -105, x)})
-
-
-validwapsdata <- data.frame(variance = apply(validation, 2, var),
-                            mean = apply(validation, 2, mean),
-                            median = apply(validation, 2, median))
-
-
 
 ####5.Metrics####
 trainingNA<-training3
@@ -152,14 +146,6 @@ multi.fun <- function(x) {
   c(min = min(x, na.rm=TRUE), mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE), n=nrow(x))
 }
 metrics<- sapply(trainingNA[,c(11:length(training3))], multi.fun)
-
-####6. SAMPLING #####
-
-Training_sample <- training3 %>% group_by(FLOOR, BUILDINGID) %>% sample_n(500)
-table(Training_sample$FLOOR)
-table(Training_sample$BUILDINGID)
-
-Training_sample$BUILDINGID <- as.character(Training_sample$BUILDINGID)
 
 #write.csv(Training_sample, file = "./datasets/Training_sample.csv")
 saveRDS(training3, file = "./datasets/training2.rds")
