@@ -112,7 +112,6 @@ WAPs_location<- WAPs_location[-c(1:10),]
 
 remove(WAPs_name, WAPs_building)
 
-View(WAPs_location)
 
 #compare it to BUILDINGID to see if it's correct
 
@@ -147,5 +146,26 @@ multi.fun <- function(x) {
 }
 metrics<- sapply(trainingNA[,c(11:length(training3))], multi.fun)
 
+
+#####6. REMOVE 0 TO -30db signals
+
+## -30 to 0 dBm Analysis
+# Outliers on Train
+training4 <-training3
+training4[training4 == 100] <- -105
+WAPSout <- apply(training4 %>% select(starts_with("WAP")),1, max) > -30
+sum(WAPSout)
+WAPSout30 <- training4[WAPSout,] 
+
+WAPSout30 %>% 
+  group_by(BUILDINGID, FLOOR, USERID, PHONEID) %>% 
+  count(USERID) # UserID 6 has lot of wrong signals
+
+training4 <- training3[!WAPSout,]
+
+#We end up removing all USER 6
+training4 <- training4 %>% filter (USERID != 6)
+
+#SAVE DEFININTIVE TRAINING DATASET
 #write.csv(Training_sample, file = "./datasets/Training_sample.csv")
-saveRDS(training3, file = "./datasets/training2.rds")
+saveRDS(training4, file = "./datasets/training2.rds")
