@@ -68,6 +68,10 @@ means<-as.data.frame(means)
 #means<-apply(training[11:530], 2, mean)
 #means<-as.data.frame(means)
 
+means2<- means %>% filter(means<=98)
+
+hist(means2$means)
+
 #delete all the WAPs with a mean of =100
 indices<-c()
 for (i in 11:530){
@@ -77,7 +81,11 @@ for (i in 11:530){
 }
 
 training2<- training[is.na(indices)]
-
+barplot(means2$means, main="WAPs MEANs", xlab="WAP")
+ 
+  ggplot(aes(x = as.numeric(row.names(means)), y = means)) +
+  geom_point(color = "red") +
+  labs(title = "Validation Data Longitude vs Latitude")
 
 ####3. ASSIGNING A BUILDING TO A WAP ####
 

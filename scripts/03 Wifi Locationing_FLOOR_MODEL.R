@@ -102,7 +102,6 @@ Floor1Metrics<-postResample(predGBM, validation1$FLOOR)
 confusionMatrix(table(predkNN0Floor, validation0$FLOOR))
 
 
-#### SAVE MODEL ####
+#### Store predicted Floor Variable ####
+predGBM <- predict(gbmfit, validation1)
 
-# Save a model
-#saveRDS(RF_Model, file="RF_Model.rds")
