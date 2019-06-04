@@ -82,11 +82,11 @@ postResample(predict.gbm, validation0$LATITUDE)
 
 ##### STANDARIZE #####
 
-Training_sample <- building2
-validation_sample<- validation2
+Training_sample <- building1
+validation_sample<- validation1
 
 
-WAPs<-grep("WAP|LONGITUDE", names(Training_sample), value=T)
+WAPs<-grep("WAP", names(Training_sample), value=T)
 preprocessParams<-preProcess(Training_sample[WAPs], method=c("center", "scale"))
 
 valid_waps<-predict(preprocessParams, validation_sample[WAPs])
@@ -100,3 +100,6 @@ system.time(knn_predict<-predict(knn_reg, valid_waps))
 postResample( knn_predict, validation_sample$LATITUDE)
 saveRDS(preprocessParams, "./models/preprocessParams.rds")
 
+system.time(knn_reg<-knnreg(x=as.matrix(building1[WAPs]), y=building1$LATITUDE, k=5))
+system.time(knn_predict<-predict(knn_reg, validation1[WAPs]))
+postResample( knn_predict, validation1$LATITUDE)

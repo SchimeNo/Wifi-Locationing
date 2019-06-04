@@ -133,12 +133,12 @@ Metrics %>% arrange(MAE)
 
 ####TRYING WITH A FOR#####
 
-prediction2<-NULL
+prediction2<-list()
 count<-1
 
 system.time(
-  for (b in 0:2){
-    for (f in 0:3){
+  for (b in 0){
+    for (f in 0:1){
       t<- train %>% filter(BUILDINGID == b, FLOOR == f) %>% select(starts_with("WAP"), LATITUDE) 
       
       v<- validation %>% filter(BUILDINGID == b, FLOOR == f) %>% select(starts_with("WAP"), LATITUDE)
@@ -148,12 +148,16 @@ system.time(
                        trControl = kNNcontrol,
                        preProcess = "zv")
       
-      predicton<-predict(kNNLong, v)
-      aux<- noquote(namesV[count])
-      
-      noquote(namesV[count])<-cbind( predicton, aux)
+      prediction<-predict(kNNLong, v)
+      # ... make some data
+      dat <- data.frame(prediction)
+      dat$count <- count  # maybe you want to keep track of which iteration produced it?
+      prediction2[[count]] <- dat # add it to your list
       count<-count+1
-      
     }
   }
 )
+postResample(prediction2, validation_aux)
+
+library(reshape)
+huh<- melt(prediction2, id.vars=c(1,2),var='prediction')
